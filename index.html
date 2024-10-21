@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCAP Slicer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            animation: fadeIn 1s ease-in-out;
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .custom-file-upload {
+            display: inline-block;
+            padding: 12px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-align: center;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        .custom-file-upload:hover {
+            background-color: #0056b3;
+            transform: scale(1.02);
+        }
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        select:focus,
+        input[type="number"]:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #007bff;
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background: #0056b3;
+            transform: scale(1.02);
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            color: red;
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.querySelector('form');
+            form.addEventListener('submit', (event) => {
+                const fileInput = document.getElementById('file');
+                const protocolInput = document.getElementById('protocol');
+                const numMatchesInput = document.getElementById('num_matches');
+
+                if (!fileInput.value) {
+                    alert('Please upload a PCAP file.');
+                    event.preventDefault();
+                } else if (!protocolInput.value) {
+                    alert('Please select a protocol (TCP or UDP).');
+                    event.preventDefault();
+                } else if (numMatchesInput.value < 1 || numMatchesInput.value > 10) {
+                    alert('Number of matches must be between 1 and 10.');
+                    event.preventDefault();
+                } else {
+                    const filePath = fileInput.value;
+                    const allowedExtensions = /(\.pcap)$/i;
+                    if (!allowedExtensions.exec(filePath)) {
+                        alert('Invalid file type. Please upload a .pcap file.');
+                        event.preventDefault();
+                        fileInput.value = '';
+                        document.getElementById('file-label').innerHTML = 'Upload PCAP file:';
+                    }
+                }
+            });
+
+            // Update label text with selected file name
+            const fileInput = document.getElementById('file');
+            const fileLabel = document.getElementById('file-label');
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    fileLabel.innerHTML = `Selected file: ${fileInput.files[0].name}`;
+                } else {
+                    fileLabel.innerHTML = 'Upload PCAP file:';
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <h1>PCAP Slicer</h1>
+            <div class="form-group">
+                <label id="file-label" for="file">Upload PCAP file:</label>
+                <label class="custom-file-upload">
+                    <input type="file" name="file" id="file" accept=".pcap" required>
+                    Choose File
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="protocol">Protocol:</label>
+                <select name="protocol" id="protocol" required>
+                    <option value="" disabled selected>Select a protocol</option>
+                    <option value="TCP">TCP</option>
+                    <option value="UDP">UDP</option>
+                    <option value="IPv4">IPv4</option>
+                    <option value="IPv6">IPv6</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="num_matches">Number of Top Conversations (Max 10):</label>
+                <input type="number" name="num_matches" id="num_matches" min="1" max="10" required>
+            </div>
+            <button type="submit">Submit</button>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <ul>
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </form>
+    </div>
+</body>
+</html>
